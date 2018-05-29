@@ -79,7 +79,7 @@ def retrieve_descriptions(gene, descriptions, empties):
         print('{} has {} unique descriptions from {} results. Most common is:\n{}'.format(
             gene, len(desc_cnt), len(doc_sums), desc))
 
-    return(empties)
+    return(None)
 
 def print_descriptions(descriptions, empties, outfile):
     """Print descriptions as 2 column TSV for update-gene2products.py"""
