@@ -2,8 +2,9 @@
 """
 Fetch descriptions from NCBI given file with gene names.
 
-Intended to use on genes in Gene2Products.need-curating.txt
-from funannotate annotate.
+Intended to use on genes from Gene2Products.need-curating.txt
+from funannotate annotate formatted as single column, new line
+separated text file.
 
 Outputs 2 column TSV ready for update-gene2products.py
 
