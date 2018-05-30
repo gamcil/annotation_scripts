@@ -42,7 +42,7 @@ def retrieve_descriptions(gene, descriptions, empties):
     # Perform ESearch and grab list of IDs
     query = gene + '[Gene Name]'
     handle = Entrez.esearch(db='gene', term=query,
-            retmax=30,
+            retmax=10,
             retmode='xml')
     record = Entrez.read(handle)
     idlist = ','.join(record["IdList"])
