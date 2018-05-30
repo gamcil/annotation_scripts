@@ -19,7 +19,7 @@ from Bio import Entrez
 from collections import Counter
 
 # *Always* tell NCBI who you are
-Entrez.email = "REPLACE WITH YOUR EMAIL ADDRESS"
+Entrez.email = "cameron.gilchrist@research.uwa.edu.au"
 
 def read_genes(gene_file):
     """Read in list of gene names from \n separated text file and
@@ -31,7 +31,7 @@ def read_genes(gene_file):
             genes.append(gene)
     return(genes)
 
-def retrieve_descriptions(gene, descriptions):
+def retrieve_descriptions(gene, descriptions, empties):
     """Given single gene name, grab possible descriptions from NCBI
     and prompt user to select one"""
 
@@ -43,6 +43,12 @@ def retrieve_descriptions(gene, descriptions):
     record = Entrez.read(handle)
     handle.close()
     idlist = ','.join(record["IdList"])
+
+    # Ensure you have results, exit if not
+    if idlist == '':
+        print('No records for {}, skipping...\n'.format(gene))
+        empties.append(gene)
+        return
 
     # Generate summary from UID list
     handle = Entrez.esummary(db='gene', id=idlist)
@@ -90,8 +96,13 @@ def retrieve_descriptions(gene, descriptions):
                     print('Invalid input, try again.')
 
     # If there's only one unique description, accept/reject
-    elif len(desc_set) == 1:
-        desc = next(iter(desc_set))
+    elif len(desc_cnt) == 1:
+        desc_list2 = list(desc_cnt)
+        desc = desc_list2[0]
+        if desc == '':
+            print('{} has empty description.'.format(gene))
+            empties.append(gene)
+            return
         print('{} only has one unique description from {} results.'.format(
             gene, len(doc_sums)))
         print('This is:\n{}'.format(desc))
@@ -104,6 +115,7 @@ def retrieve_descriptions(gene, descriptions):
                 break
             elif ans in ['N', 'n', 'no', 'No']:
                 print('Skipping this gene.\n')
+                empties.append(gene)
                 break
             else:
                 print('Invalid input, try again.')
@@ -112,6 +124,10 @@ def retrieve_descriptions(gene, descriptions):
 def print_descriptions(descriptions, outfile):
     """Print descriptions as 2 column TSV for update-gene2products.py"""
     with open(outfile, 'w') as out:
+        out.write('Empty descriptions:\n')
+        for gene in empties:
+            out.write('{}\n'.format(gene))
+        out.write('\nNon-empty descriptions:\n')
         for gene in descriptions:
             out.write('{}\t{}\n'.format(gene, descriptions[gene]))
 
@@ -122,9 +138,10 @@ print('There are {} genes in {}. These are:\n{}\n'.format(
     )
 
 # Fetch descriptions
+empties = []
 descriptions = {}
 for gene in genes:
-    retrieve_descriptions(gene, descriptions)
+    retrieve_descriptions(gene, descriptions, empties)
 
 # Write to output file given in second argument
 print_descriptions(descriptions, sys.argv[2])
