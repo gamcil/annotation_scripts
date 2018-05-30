@@ -42,7 +42,7 @@ def retrieve_descriptions(gene, descriptions, empties):
     # Perform ESearch and grab list of IDs
     query = gene + '[Gene Name]'
     handle = Entrez.esearch(db='gene', term=query,
-            retmax=200,
+            retmax=30,
             retmode='xml')
     record = Entrez.read(handle)
     idlist = ','.join(record["IdList"])
@@ -63,11 +63,18 @@ def retrieve_descriptions(gene, descriptions, empties):
     desc_cnt = Counter()
     doc_sums = record[u'DocumentSummarySet'][u'DocumentSummary']
     for i in range(len(doc_sums)):
+        # Use NomenclatureName first if not empty 
         if doc_sums[i][u'NomenclatureName'] != '':
             desc = doc_sums[i][u'NomenclatureName']
+            desc_cnt[desc] += 1
+        # Otherwise add from OtherDesignations
         else:
-            desc = doc_sums[i][u'OtherDesignations'].split('|')[0]
-        desc_cnt[desc] += 1
+            descs = doc_sums[i][u'OtherDesignations'].split('|')
+            for desc in descs:
+                # Ignore descriptions like 'protein IMPA1'
+                if desc == 'protein {}'.format(gene):
+                    continue
+                desc_cnt[desc] += 1
 
     desc = desc_cnt.most_common(1)[0][0]
     # Check for empty descriptions
@@ -79,7 +86,7 @@ def retrieve_descriptions(gene, descriptions, empties):
         print('{} has {} unique descriptions from {} results. Most common is:\n{}'.format(
             gene, len(desc_cnt), len(doc_sums), desc))
 
-    return(None)
+    return(empties)
 
 def print_descriptions(descriptions, empties, outfile):
     """Print descriptions as 2 column TSV for update-gene2products.py"""
